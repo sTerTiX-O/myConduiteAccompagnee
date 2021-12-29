@@ -17,10 +17,20 @@ app = Flask(__name__)
 #
 #
 
+
+
 @app.route("/createDrivingSession", methods=['GET'])
 def createDrivingSession():
     uuidDrivingSession = MCADrivingSessionService_createDrivingSession() 
     return str(uuidDrivingSession)
+
+
+
+@app.route("/deleteDrivingSession/<uuidDeletedDrivingSession>", methods=['GET'])
+def deleteDrivingSession(uuidDeletedDrivingSession):
+    MCADrivingSessionService_deleteDrivingSession(uuidDeletedDrivingSession)
+    return uuidDeletedDrivingSession
+
 
 
 
@@ -32,6 +42,8 @@ def createDrivingSession():
 #
 #
 
+
+
 def MCADrivingSessionService_createDrivingSession():
     uuidDrivingSession = uuid.uuid4()
     drivingSession = (str(uuidDrivingSession), 'Session Matinale', '2023/12/26Z13:37:37', '2023/12/26Z13:57:45')
@@ -41,12 +53,23 @@ def MCADrivingSessionService_createDrivingSession():
 
 
 
+def MCADrivingSessionService_deleteDrivingSession(uuidDeletedDrivingSession):
+    MCADataBaseAccess_deleteDrivingSession(uuidDeletedDrivingSession)
+    print("Destruction session conduite uuidDeletedDrivingSession=[{}]".format(uuidDeletedDrivingSession))
+    return uuidDeletedDrivingSession
+
+
+
+
+
 
 #
 #
 # Database access (MCADataBaseAccess)
 #
 #
+
+
 
 def MCADataBaseAccess_insertDrivingSession(drivingSession):
     """
@@ -67,6 +90,25 @@ def MCADataBaseAccess_insertDrivingSession(drivingSession):
 
 
 
+def MCADataBaseAccess_deleteDrivingSession(uuidDeletedDrivingSession):
+    """
+    Delete a task by task id
+    :param conn:  Connection to the SQLite database
+    :param id: id of the task
+    :return:
+    """
+    conn = MCADataBaseAccess_create_connection()
+    with conn:
+        sql = 'DELETE FROM drivingsessions WHERE id=?'
+        cur = conn.cursor()
+        cur.execute(sql, (uuidDeletedDrivingSession,))
+        conn.commit()
+
+
+#
+# Helper functions
+#
+
 def MCADataBaseAccess_create_connection():
     """ create a database connection to the SQLite database
         specified by db_file
@@ -81,6 +123,9 @@ def MCADataBaseAccess_create_connection():
         print(e)
 
     return conn
+
+
+
 
 
 

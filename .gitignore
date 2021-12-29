@@ -1,1 +1,2 @@
 @sandboxes/0.sqllite/db/*.db
+@sandboxes/0.sqllite/env

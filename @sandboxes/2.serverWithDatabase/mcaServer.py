@@ -1,6 +1,9 @@
+# -*- coding: utf-8 -*-
+
 from flask import Flask
 from flask import Response
 from flask import request
+from flask import jsonify
 import sqlite3
 from sqlite3 import Error
 import uuid
@@ -18,18 +21,34 @@ app = Flask(__name__)
 #
 
 
-
 @app.route("/createDrivingSession", methods=['GET'])
 def createDrivingSession():
     uuidDrivingSession = MCADrivingSessionService_createDrivingSession() 
     return str(uuidDrivingSession)
 
 
-
 @app.route("/deleteDrivingSession/<uuidDeletedDrivingSession>", methods=['GET'])
 def deleteDrivingSession(uuidDeletedDrivingSession):
     MCADrivingSessionService_deleteDrivingSession(uuidDeletedDrivingSession)
     return uuidDeletedDrivingSession
+
+
+@app.route("/updateDrivingSessionsInfos/<uuidModifiedDrivngSessions>/newname/<newDrivingSessionName>")
+def updateDrivingSessionsInfos(uuidModifiedDrivngSessions, newDrivingSessionName):
+    MCADrivingSessionService_updateDrivingSessionsInfos(uuidModifiedDrivngSessions, newDrivingSessionName)
+    return newDrivingSessionName
+
+
+@app.route("/fetchDrivingSessionsInfos/<uuidDrivingSessionInfoWantedToBeFetch>")
+def fetchDrivingSessionsInfos(uuidDrivingSessionInfoWantedToBeFetch):
+    MCADrivingSessionService_fetchDrivingSessionsInfos(uuidDrivingSessionInfoWantedToBeFetch)
+    return uuidDrivingSessionInfoWantedToBeFetch
+
+
+@app.route("/fetchAllDrivingSessions")
+def fetchAllDrivingSessions():
+    AllDrivingSessions = MCADrivingSessionService_fetchAllDrivingSessions()
+    return jsonify(AllDrivingSessions)
 
 
 
@@ -42,8 +61,6 @@ def deleteDrivingSession(uuidDeletedDrivingSession):
 #
 #
 
-
-
 def MCADrivingSessionService_createDrivingSession():
     uuidDrivingSession = uuid.uuid4()
     drivingSession = (str(uuidDrivingSession), 'Session Matinale', '2023/12/26Z13:37:37', '2023/12/26Z13:57:45')
@@ -52,11 +69,27 @@ def MCADrivingSessionService_createDrivingSession():
     return uuidDrivingSession
 
 
-
 def MCADrivingSessionService_deleteDrivingSession(uuidDeletedDrivingSession):
     MCADataBaseAccess_deleteDrivingSession(uuidDeletedDrivingSession)
     print("Destruction session conduite uuidDeletedDrivingSession=[{}]".format(uuidDeletedDrivingSession))
     return uuidDeletedDrivingSession
+
+
+def MCADrivingSessionService_updateDrivingSessionsInfos(uuidModifiedDrivngSessions, newDrivingSessionName):
+    MCADataBaseAccess_updateDrivingSessionsInfos(uuidModifiedDrivngSessions, newDrivingSessionName)
+    print("Modification infos avec uuidModifiedDrivngSessions=[{}] et newname=[{}]".format(uuidModifiedDrivngSessions, newDrivingSessionName))
+    return uuidModifiedDrivngSessions, newDrivingSessionName
+
+
+def MCADrivingSessionService_fetchDrivingSessionsInfos(uuidDrivingSessionInfoWantedToBeFetch):
+    print("Récuperation des données avec uuidDrivingSessionInfoWantedToBeFetch=[{}] ...".format(uuidDrivingSessionInfoWantedToBeFetch))
+    MCADataBaseAccess_fetchDrivingSessionsInfos(uuidDrivingSessionInfoWantedToBeFetch)
+
+
+def MCADrivingSessionService_fetchAllDrivingSessions():
+    print("Récuperation des driving sessions ...")
+    gigi = MCADataBaseAccess_fetchAllDrivingSessions()
+    return gigi
 
 
 
@@ -68,8 +101,6 @@ def MCADrivingSessionService_deleteDrivingSession(uuidDeletedDrivingSession):
 # Database access (MCADataBaseAccess)
 #
 #
-
-
 
 def MCADataBaseAccess_insertDrivingSession(drivingSession):
     """
@@ -89,8 +120,7 @@ def MCADataBaseAccess_insertDrivingSession(drivingSession):
         return cur.lastrowid
 
 
-
-def MCADataBaseAccess_deleteDrivingSession(uuidDeletedDrivingSession):
+def MCADataBaseAccess_deleteDrivingSession(uuidDeletedDrivingSession, ):
     """
     Delete a task by task id
     :param conn:  Connection to the SQLite database
@@ -103,6 +133,64 @@ def MCADataBaseAccess_deleteDrivingSession(uuidDeletedDrivingSession):
         cur = conn.cursor()
         cur.execute(sql, (uuidDeletedDrivingSession,))
         conn.commit()
+
+
+def MCADataBaseAccess_updateDrivingSessionsInfos(uuidModifiedDrivingSessions, newDrivingSessionName):
+    """
+    update priority, begin_date, and end date of a task
+    :param conn:
+    :param task:
+    :return: project id
+    """
+    conn = MCADataBaseAccess_create_connection()
+    with conn:
+        sql = ''' UPDATE drivingsessions
+                  SET name = ? 
+                  WHERE id = ?'''
+        cur = conn.cursor()
+        cur.execute(sql, (newDrivingSessionName, uuidModifiedDrivingSessions))
+        conn.commit()
+
+
+def MCADataBaseAccess_fetchDrivingSessionsInfos(uuidDrivingSessionInfoWantedToBeFetch):
+    """
+    Query all rows in the tasks table
+    :param conn: the Connection object
+    :return:
+    """
+    conn = MCADataBaseAccess_create_connection()
+    with conn:
+        cur = conn.cursor()
+        sql = "SELECT * FROM drivingsessions WHERE id = ?"
+
+        cur.execute(sql, (uuidDrivingSessionInfoWantedToBeFetch, ))
+        rows = cur.fetchall()
+
+        for row in rows:
+            print(row)
+
+
+def MCADataBaseAccess_fetchAllDrivingSessions():
+    """
+    Query all rows in the tasks table
+    :param conn: the Connection object
+    :return:
+    """
+    conn = MCADataBaseAccess_create_connection()
+    with conn:
+        cur = conn.cursor()
+        sql = "SELECT * FROM drivingsessions "
+
+        cur.execute(sql)
+        rows = cur.fetchall()
+
+        for row in rows:
+            print(row)  
+         return rows
+
+
+
+
 
 
 #
